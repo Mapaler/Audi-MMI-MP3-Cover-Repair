@@ -21,9 +21,12 @@ foreach (ImageCodecInfo codec in ImageCodecInfo.GetImageDecoders())
     }
 }
 
+uint currentIndex = 0;
 foreach (var arg in args)
 {
     Debug.WriteLine("参数: {0}", arg);
+    currentIndex++;
+    Console.WriteLine(string.Format("Title:     {0}/{1}", currentIndex, args.Length));
 
     FileInfo musicFile = new(arg); //获取目标文件路径信息
     if (!musicFile.Exists) //如果音乐文件不存在则跳过
@@ -32,9 +35,14 @@ foreach (var arg in args)
         continue;
     }
     ID3v2Tag id3v2 = new(musicFile.FullName);
-
     Console.WriteLine(string.Format("Title:     {0}", id3v2.Title));
     Console.WriteLine(string.Format("Pictures:  {0}", id3v2.PictureList.Count));
+
+    if (id3v2.PictureList.Count < 1)
+    {
+        Console.Error.WriteLine("错误：没有封面图片 {0}", musicFile.FullName);
+        continue;
+    }
     IAttachedPicture attachedPicture = id3v2.PictureList[0];
 
 #if DEBUG
@@ -101,6 +109,6 @@ foreach (var arg in args)
     else
     {
         Console.WriteLine("图片大小不需要调整");
-        continue;
     }
+    Console.WriteLine();
 }

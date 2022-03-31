@@ -7,7 +7,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <ApplicationIcon>Properties\aodi.ico</ApplicationIcon>
-    <AssemblyVersion>1.0.1.0</AssemblyVersion>
+    <AssemblyVersion>1.0.2.0</AssemblyVersion>
     <Authors>Mapaler</Authors>
     <Description>修复奥迪汽车MP3歌曲封面 </Description>
   </PropertyGroup>
