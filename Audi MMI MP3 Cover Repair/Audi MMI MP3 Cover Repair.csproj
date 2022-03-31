@@ -6,7 +6,15 @@
     <RootNamespace>Audi_MMI_MP3_Cover_Repair</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <ApplicationIcon>Properties\aodi.ico</ApplicationIcon>
+    <AssemblyVersion>1.0.1.0</AssemblyVersion>
+    <Authors>Mapaler</Authors>
+    <Description>修复奥迪汽车MP3歌曲封面 </Description>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="Properties\aodi.ico" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="IdSharp.Tagging" Version="1.0.0-rc3" />

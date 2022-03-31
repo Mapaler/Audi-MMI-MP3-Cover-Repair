@@ -21,17 +21,17 @@ foreach (ImageCodecInfo codec in ImageCodecInfo.GetImageDecoders())
     }
 }
 
-foreach (var item in args)
+foreach (var arg in args)
 {
-    Debug.WriteLine("参数: {0}", item);
+    Debug.WriteLine("参数: {0}", arg);
 
-    FileInfo musicFile = new(item); //获取目标文件路径信息
+    FileInfo musicFile = new(arg); //获取目标文件路径信息
     if (!musicFile.Exists) //如果音乐文件不存在则跳过
     {
-        Console.Error.WriteLine("错误：未发现音乐文件 {0}", item);
+        Console.Error.WriteLine("错误：未发现音乐文件 {0}", musicFile.FullName);
         continue;
     }
-    ID3v2Tag id3v2 = new(item);
+    ID3v2Tag id3v2 = new(musicFile.FullName);
 
     Console.WriteLine(string.Format("Title:     {0}", id3v2.Title));
     Console.WriteLine(string.Format("Pictures:  {0}", id3v2.PictureList.Count));
@@ -58,34 +58,43 @@ foreach (var item in args)
     
     Console.WriteLine(string.Format("Picture Type:     {0}", attachedPicture.PictureType));
     Console.WriteLine(string.Format("Size:     {0}x{1}", image.Size.Width, image.Size.Height));
-    if (image.Size.Width > maxWidth || image.Size.Height > maxHeight)
+    bool isJpeg = attachedPicture.Picture.RawFormat.Guid == ImageFormat.Jpeg.Guid;
+    if (image.Size.Width > maxWidth || image.Size.Height > maxHeight || !isJpeg)
     {
         double scale;
         scale = Math.Min((double)maxWidth / (double)image.Size.Width, (double)maxHeight / (double)image.Size.Height);
-        Console.WriteLine(string.Format("缩小比例:     {0}", scale));
-        Size size = new(Convert.ToInt32(image.Size.Width * scale), Convert.ToInt32(image.Size.Height * scale));
-        Image? imgOutput = image.GetThumbnailImage(size.Width, size.Height, null, IntPtr.Zero);
+        Image newImage;
+        if (scale < 1)
+        {
+            Size size = new(Convert.ToInt32(image.Size.Width * scale), Convert.ToInt32(image.Size.Height * scale));
+            Console.WriteLine(string.Format("缩小比例:     {0}", scale));
+            newImage = image.GetThumbnailImage(size.Width, size.Height, null, IntPtr.Zero);
+        }
+        else
+        {
+            newImage = (Image)image.Clone();
+        }
 
         //创建JPEG压缩的参数
         EncoderParameters parameters = new(1);
         parameters.Param[0] = new EncoderParameter(Encoder.Quality, (long)quality);
 
         //在内存中压缩转存一遍
-        MemoryStream ms = new();
-        imgOutput.Save(ms, jpegEncoder, parameters);
-        Image imgStream = Image.FromStream(ms);
+        MemoryStream jpegMemory = new();
+        newImage.Save(jpegMemory, jpegEncoder, parameters);
+        Image jpegImage = Image.FromStream(jpegMemory);
 
 #if DEBUG
         //保存封面图片
-        string coverThumbnailFileName = musicFile.DirectoryName + "/" + Path.GetFileNameWithoutExtension(musicFile.Name) + "-" + attachedPicture.PictureType + "-resize." + attachedPicture.PictureExtension;
-        imgStream.Save(coverThumbnailFileName);
+        string coverThumbnailFileName = musicFile.DirectoryName + "/" + Path.GetFileNameWithoutExtension(musicFile.Name) + "-" + attachedPicture.PictureType + "-resize.jpg";
+        jpegImage.Save(coverThumbnailFileName);
         //复制一份新的mp3来修改封面
         string newFilename = musicFile.DirectoryName + "/" + Path.GetFileNameWithoutExtension(musicFile.Name) + "_id3" + musicFile.Extension;
-        File.Copy(item, newFilename, true);
+        File.Copy(musicFile.FullName, newFilename, true);
 #else
         string newFilename = musicFile.FullName;
 #endif
-        attachedPicture.Picture = imgStream; //将ID3封面修改为新的图片
+        attachedPicture.Picture = jpegImage; //将ID3封面修改为新的图片
 
         id3v2.Save(newFilename);
     }
