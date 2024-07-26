@@ -5,7 +5,7 @@
 
 将 MP3 文件的图片全部缩小到不大于 480x480 ，位置调整到封面(Cover-Front)。
 
-![预览图](preview.webp)
+![预览图](doc/preview.webp)
 
 ## 运行
 查看帮助信息获取运行方式
