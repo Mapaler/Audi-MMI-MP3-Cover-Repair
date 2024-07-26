@@ -37,7 +37,6 @@ qualityOption.AddAlias("-q");
 var savePictureOption = new Option<bool>(
     name: "--save-picture",
     description: "储存原始图片文件。\nSave the Original Picture to file.");
-savePictureOption.AddAlias("-save");
 
 var rootCommand = new RootCommand($"修复奥迪汽车多媒体平台 MP3 歌曲不能显示封面的问题，将 MP3 文件的图片全部缩小到不大于 480x480 ，位置调整到封面(Cover-Front)。{Environment.NewLine}Fixed the issue that the cover picture of MP3 songs on Audi car MMI could not be displayed, and all the pictures in MP3 files were reduced to no larger than 480x480, and the position was adjusted to Cover-Front.");
 rootCommand.AddOption(maxWidthOption);
@@ -155,7 +154,7 @@ static void ReadFile(FileInfo[] files, uint maxWidth, uint maxHeight, bool keepR
                 }
                 else
                 {
-                    Console.WriteLine(string.Format("Resize Scale:\tNot Resize, just move to the Front-Cover. 不改变图像大小，仅移动到封面"));
+                    Console.WriteLine(string.Format("Not Resize, just move to the Cover-Front. 不改变图像大小，仅移动到封面"));
                     newPicture = PictureInfo.fromBinaryData(pic.PictureData, PictureInfo.PIC_TYPE.Front);
                 }
 
