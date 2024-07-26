@@ -1,114 +1,190 @@
 ﻿// See https://aka.ms/new-console-template for more information
-using IdSharp.Tagging.ID3v1;
-using IdSharp.Tagging.ID3v2;
-using IdSharp.Tagging.ID3v2.Frames;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Diagnostics;
+using System.CommandLine;
+using ATL.AudioData;
+using ATL;
+using System.IO;
 
-const uint maxWidth = 480; //图象的最大宽度与高度
-const uint maxHeight = 480;
-const byte quality = 90; //JPEG的图像质量
+var filesArgument = new Argument<FileInfo[]?>
+    (name: "files",
+    description: "需要处理的多个 MP3 文件。\nMP3 files that need to be modified.");
 
-//获取JPEG的编码器信息
-ImageCodecInfo? jpegEncoder = null;
-foreach (ImageCodecInfo codec in ImageCodecInfo.GetImageDecoders())
+var maxWidthOption = new Option<uint>(
+    name: "--max-width",
+    description: "新图片最大宽度。\nThe max Width of the new JPEG file.",
+    getDefaultValue: () => 480);
+maxWidthOption.AddAlias("-W");
+
+var maxHeightOption = new Option<uint>(
+    name: "--max-height",
+    description: "新图片最大高度。\nThe max Height of the new JPEG file.",
+    getDefaultValue: () => 480);
+maxHeightOption.AddAlias("-H");
+
+var keepRatioOption = new Option<bool>(
+    name: "--keep-ratio",
+    description: "保持图片宽高比。\nMaintain the aspect ratio of the image.",
+    getDefaultValue: () => true);
+
+var qualityOption = new Option<byte>(
+    name: "--quality",
+    description: "新 JPEG 文件的压缩质量。\nThe compressed quality of the new JPEG file.",
+    getDefaultValue: () => 90);
+qualityOption.AddAlias("-q");
+
+var savePictureOption = new Option<bool>(
+    name: "--save-picture",
+    description: "储存原始图片文件。\nSave the Original Picture to file.");
+savePictureOption.AddAlias("-save");
+
+var rootCommand = new RootCommand($"修复奥迪汽车多媒体平台 MP3 歌曲不能显示封面的问题，将 MP3 文件的图片全部缩小到不大于 480x480 ，位置调整到封面(Cover-Front)。{Environment.NewLine}Fixed the issue that the cover picture of MP3 songs on Audi car MMI could not be displayed, and all the pictures in MP3 files were reduced to no larger than 480x480, and the position was adjusted to Cover-Front.");
+rootCommand.AddOption(maxWidthOption);
+rootCommand.AddOption(maxHeightOption);
+rootCommand.AddOption(keepRatioOption);
+rootCommand.AddOption(qualityOption);
+rootCommand.AddOption(savePictureOption);
+rootCommand.Add(filesArgument);
+
+rootCommand.SetHandler(ReadFile,
+    filesArgument, maxWidthOption, maxHeightOption, keepRatioOption, qualityOption, savePictureOption);
+
+await rootCommand.InvokeAsync(args);
+
+static string GetExtFromMimeType(string MimeType)
 {
-    if (codec.FormatID == ImageFormat.Jpeg.Guid)
-    {
-        jpegEncoder = codec;
-        break;
-    }
+    return MimeType
+        .Split('/', StringSplitOptions.RemoveEmptyEntries)
+        .Last();
 }
-
-uint currentIndex = 0;
-foreach (var arg in args)
+static void ReadFile(FileInfo[] files, uint maxWidth, uint maxHeight, bool keepRatio, byte quality, bool savePicture)
 {
-    Debug.WriteLine("参数: {0}", arg);
-    currentIndex++;
-    Console.WriteLine(string.Format("Title:     {0}/{1}", currentIndex, args.Length));
-
-    FileInfo musicFile = new(arg); //获取目标文件路径信息
-    if (!musicFile.Exists) //如果音乐文件不存在则跳过
+    //获取JPEG的编码器信息
+    ImageCodecInfo? jpegEncoder = ImageCodecInfo.GetImageDecoders().ToList().Find(codec =>
     {
-        Console.Error.WriteLine("错误：未发现音乐文件 {0}", musicFile.FullName);
-        continue;
-    }
-    ID3v2Tag id3v2 = new(musicFile.FullName);
-    Console.WriteLine(string.Format("Title:     {0}", id3v2.Title));
-    Console.WriteLine(string.Format("Pictures:  {0}", id3v2.PictureList.Count));
+        return codec.FormatID == ImageFormat.Jpeg.Guid;
+    });
 
-    if (id3v2.PictureList.Count < 1)
+    uint currentIndex = 0;
+    foreach (FileInfo file in files)
     {
-        Console.Error.WriteLine("错误：没有封面图片 {0}", musicFile.FullName);
-        continue;
-    }
-    IAttachedPicture attachedPicture = id3v2.PictureList[0];
-
-#if DEBUG
-    //保存封面图片
-    string coverFileName = musicFile.DirectoryName + "/" + Path.GetFileNameWithoutExtension(musicFile.Name) + "-" + attachedPicture.PictureType + "." + attachedPicture.PictureExtension;
-    FileStream fileStream = new(coverFileName, FileMode.OpenOrCreate, FileAccess.Write);
-    fileStream.Write(attachedPicture.PictureData);
-#endif
-
-    //如果不是封面，则清空后重新添加封面
-    if (attachedPicture.PictureType != PictureType.CoverFront)
-    {
-        id3v2.PictureList.Clear();
-        attachedPicture.PictureType = PictureType.CoverFront;
-        id3v2.PictureList.Add(attachedPicture);
-    }
-
-    //将封面加载到内存
-    Stream stream = new MemoryStream(attachedPicture.PictureData);
-    Image image = Image.FromStream(stream);
-    
-    Console.WriteLine(string.Format("Picture Type:     {0}", attachedPicture.PictureType));
-    Console.WriteLine(string.Format("Size:     {0}x{1}", image.Size.Width, image.Size.Height));
-    bool isJpeg = attachedPicture.Picture.RawFormat.Guid == ImageFormat.Jpeg.Guid;
-    if (image.Size.Width > maxWidth || image.Size.Height > maxHeight || !isJpeg)
-    {
-        double scale;
-        scale = Math.Min((double)maxWidth / (double)image.Size.Width, (double)maxHeight / (double)image.Size.Height);
-        Image newImage;
-        if (scale < 1)
+        currentIndex++;
+        Console.WriteLine("Index:\t{0}/{1}", currentIndex, files.Length);
+        if (!file.Exists) //如果文件不存在，则直接跳过
         {
-            Size size = new(Convert.ToInt32(image.Size.Width * scale), Convert.ToInt32(image.Size.Height * scale));
-            Console.WriteLine(string.Format("缩小比例:     {0}", scale));
-            newImage = image.GetThumbnailImage(size.Width, size.Height, null, IntPtr.Zero);
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.Error.WriteLine("Error:\tFile is not Exists.文件不存在。");
+            Console.Error.WriteLine("\t{0}", file);
+            Console.ResetColor();
+            Console.WriteLine();
+            continue;
+        }
+        // Initialize with a file path
+        Track theTrack = new Track(file.FullName);
+
+        // Works the same way on any supported format (MP3, FLAC, WMA, SPC...)
+        Console.WriteLine("Title:\t" + theTrack.Title);
+
+        // Get picture list
+        if (theTrack.EmbeddedPictures.Count == 0)
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.Error.WriteLine("Error:\tFile don't have any Picture.文件里没有内嵌图片。");
+            Console.Error.WriteLine("\t{0}", file);
+            Console.ResetColor();
+            Console.WriteLine();
+            continue;
         }
         else
         {
-            newImage = (Image)image.Clone();
-        }
+            PictureInfo pic = theTrack.EmbeddedPictures.First();
+            Image image = Image.FromStream(new MemoryStream(pic.PictureData));
+#if DEBUG
+            savePicture = true;
+#endif
+            if (savePicture)
+            {
+                //保存图片原始数据
+                string coverFileName = Path.Combine(file.DirectoryName, $"{Path.GetFileNameWithoutExtension(file.Name)}-{pic.PicType}.{GetExtFromMimeType(pic.MimeType)}");
+                FileStream fileStream = new(coverFileName, FileMode.OpenOrCreate, FileAccess.Write);
+                fileStream.Write(pic.PictureData);
+            }
 
-        //创建JPEG压缩的参数
-        EncoderParameters parameters = new(1);
-        parameters.Param[0] = new EncoderParameter(Encoder.Quality, (long)quality);
+            Console.WriteLine("Picture Type:\t{0}", pic.PicType);
+            Console.WriteLine("Size:\t{0}x{1}", image.Width, image.Height);
 
-        //在内存中压缩转存一遍
-        MemoryStream jpegMemory = new();
-        newImage.Save(jpegMemory, jpegEncoder, parameters);
-        Image jpegImage = Image.FromStream(jpegMemory);
+            if (pic.PicType != PictureInfo.PIC_TYPE.Front || //不是封面也要处理
+                image.RawFormat.ToString() != ImageFormat.Jpeg.ToString() || //不是 Jpeg
+                image.Width > maxWidth || image.Height > maxHeight) //宽高大于设定
+            {
+
+                PictureInfo newPicture;
+                if (image.RawFormat.ToString() != ImageFormat.Jpeg.ToString() || image.Width > maxWidth || image.Height > maxHeight)
+                {
+                    double scaleW = (double)maxWidth / image.Width; //宽度缩小比例
+                    double scaleH = (double)maxHeight / image.Height; //高度缩小比例
+                    if (keepRatio)
+                    {
+                        scaleW = Math.Min(scaleW, scaleH);
+                        scaleH = Math.Min(scaleW, scaleH);
+                    }
+                    int newWidth = Math.Min(image.Width, (int)Math.Round(image.Width * scaleW));
+                    int newHeight = Math.Min(image.Height, (int)Math.Round(image.Height * scaleH));
+
+                    Console.WriteLine(string.Format("Resize Scale:\t{0}:{1}", scaleW, scaleH));
+                    Bitmap newImage = new Bitmap(image, new Size(newWidth, newHeight));
+
+                    //创建JPEG压缩的参数
+                    EncoderParameters parameters = new(1);
+                    parameters.Param[0] = new EncoderParameter(Encoder.Quality, (long)quality);
+
+                    //在内存中压缩转存一遍
+                    MemoryStream jpegMemory = new();
+                    newImage.Save(jpegMemory, jpegEncoder, parameters);
+
+                    newPicture = PictureInfo.fromBinaryData(jpegMemory.ToArray(), PictureInfo.PIC_TYPE.Front);
+#if DEBUG
+                    {
+                        //保存新的封面图片
+                        string coverResizeFileName = Path.Combine(file.DirectoryName, $"{Path.GetFileNameWithoutExtension(file.Name)}-{newPicture.PicType}-resize.{GetExtFromMimeType(newPicture.MimeType)}");
+                        FileStream fileStream = new(coverResizeFileName, FileMode.OpenOrCreate, FileAccess.Write);
+                        fileStream.Write(newPicture.PictureData);
+                    }
+#endif
+                }
+                else
+                {
+                    Console.WriteLine(string.Format("Resize Scale:\tNot Resize, just move to the Front-Cover. 不改变图像大小，仅移动到封面"));
+                    newPicture = PictureInfo.fromBinaryData(pic.PictureData, PictureInfo.PIC_TYPE.Front);
+                }
+
+                // 清除全部图片
+                theTrack.EmbeddedPictures.Clear();
+
+                // 添加封面
+                theTrack.EmbeddedPictures.Add(newPicture);
 
 #if DEBUG
-        //保存封面图片
-        string coverThumbnailFileName = musicFile.DirectoryName + "/" + Path.GetFileNameWithoutExtension(musicFile.Name) + "-" + attachedPicture.PictureType + "-resize.jpg";
-        jpegImage.Save(coverThumbnailFileName);
-        //复制一份新的mp3来修改封面
-        string newFilename = musicFile.DirectoryName + "/" + Path.GetFileNameWithoutExtension(musicFile.Name) + "_id3" + musicFile.Extension;
-        File.Copy(musicFile.FullName, newFilename, true);
+                //复制一份新的mp3来修改封面
+                string newFilename = Path.Combine(file.DirectoryName, $"{Path.GetFileNameWithoutExtension(file.Name)}-id3.{file.Extension}");
+                file.CopyTo(newFilename, true);
+                //将元数据复制到新文件
+                Track theCopyTrack = new Track(newFilename);
+                theCopyTrack.Remove(MetaDataIOFactory.TagType.ANY); //去除新文件里的所有内容
+                theTrack.CopyMetadataTo(theCopyTrack);
+                //保存新文件
+                theCopyTrack.Save();
 #else
-        string newFilename = musicFile.FullName;
+                // Save modifications on the disc
+                theTrack.Save();
 #endif
-        attachedPicture.Picture = jpegImage; //将ID3封面修改为新的图片
-
-        id3v2.Save(newFilename);
+            }
+            else
+            {
+                Console.WriteLine(string.Format("Don't need do anything for Picture. 不需要对图片做任何处理"));
+            }
+            Console.WriteLine();
+        }
     }
-    else
-    {
-        Console.WriteLine("图片大小不需要调整");
-    }
-    Console.WriteLine();
 }

@@ -8,9 +8,16 @@
 ![预览图](preview.webp)
 
 ## 运行
-本来 .Net Framwork 也能写，但是为了学习新技术，用了 .Net 6。
+查看帮助信息获取运行方式
+```bat
+AMMICP.exe -h
+```
 
-因为是个人用，所以懒得写传入参数了。只支持传入 mp3 文件路径。
+示例
+```bat
+AMMICP.exe C:\music\a.mp3 "D:\music\good song.mp3" E:\a.mp3
+```
 
 ## 使用开源库
-* [IdSharp](//github.com/RandallFlagg/IdSharpCore)   .NET ID3 Tagging Library
+* [System.CommandLine](https://www.nuget.org/packages/System.CommandLine) - .NET CommandLine parser
+* [Audio Tools Library (ATL) for .NET](https://www.nuget.org/packages/z440.atl.core/) - .NET ID3 Tagging Library

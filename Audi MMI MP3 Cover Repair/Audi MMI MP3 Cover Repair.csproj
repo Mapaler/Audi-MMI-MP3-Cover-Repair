@@ -2,14 +2,16 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <RootNamespace>Audi_MMI_MP3_Cover_Repair</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <ApplicationIcon>Properties\aodi.ico</ApplicationIcon>
-    <AssemblyVersion>1.0.2.0</AssemblyVersion>
-    <Authors>Mapaler</Authors>
-    <Description>修复奥迪汽车MP3歌曲封面 </Description>
+    <VersionPrefix>2.0.0</VersionPrefix>
+    <Authors>枫谷剑仙</Authors>
+    <Copyright>Copyright © 2024 Mapaler</Copyright>
+    <Description>修复奥迪汽车多媒体平台 MP3 歌曲不能显示封面的问题</Description>
+    <AssemblyName>AMMICP</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>
@@ -17,7 +19,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="IdSharp.Tagging" Version="1.0.0-rc3" />
+    <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
+    <PackageReference Include="System.Drawing.Common" Version="8.0.7" />
+    <PackageReference Include="z440.atl.core" Version="5.25.0" />
   </ItemGroup>
 
 </Project>

@@ -2,7 +2,7 @@
   "profiles": {
     "Audi MMI MP3 Cover Repair": {
       "commandName": "Project",
-      "commandLineArgs": "\"F:\\日系歌曲\\きゃりーぱみゅぱみゅ - インベーダーインベーダー.mp3\""
+      "commandLineArgs": "-h"
     }
   }
 }
