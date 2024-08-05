@@ -6,59 +6,103 @@ using System.CommandLine;
 using ATL.AudioData;
 using ATL;
 using System.IO;
+using System.CommandLine.Binding;
+
+const int defaultLength = 480;
 
 var filesArgument = new Argument<FileInfo[]?>
     (name: "files",
-    description: "需要处理的多个 MP3 文件。\nMP3 files that need to be modified.");
+    description: $"MP3 files that need to be modified.{Environment.NewLine}需要处理的多个 MP3 文件。");
 
 var maxWidthOption = new Option<uint>(
     name: "--max-width",
-    description: "新图片最大宽度。\nThe max Width of the new JPEG file.",
-    getDefaultValue: () => 480);
+    description: $"The max Width of the new JPEG file.{Environment.NewLine}新图片最大宽度。",
+    getDefaultValue: () => defaultLength);
 maxWidthOption.AddAlias("-W");
 
 var maxHeightOption = new Option<uint>(
     name: "--max-height",
-    description: "新图片最大高度。\nThe max Height of the new JPEG file.",
-    getDefaultValue: () => 480);
+    description: $"The max Height of the new JPEG file. {Environment.NewLine}新图片最大高度。",
+    getDefaultValue: () => defaultLength);
 maxHeightOption.AddAlias("-H");
 
 var keepRatioOption = new Option<bool>(
     name: "--keep-ratio",
-    description: "保持图片宽高比。\nMaintain the aspect ratio of the image.",
+    description: $"Maintain the aspect ratio of the image. {Environment.NewLine}保持图片宽高比。",
     getDefaultValue: () => true);
 
 var qualityOption = new Option<byte>(
-    name: "--quality",
-    description: "新 JPEG 文件的压缩质量。\nThe compressed quality of the new JPEG file.",
+    name: "--jpeg-quality",
+    description: $"The compressed quality of the JPEG cover picture in new audio file. {Environment.NewLine}新音频文件内 JPEG 封面图片文件的压缩质量。",
     getDefaultValue: () => 90);
 qualityOption.AddAlias("-q");
+qualityOption.AddValidator(result =>
+{
+    if (result.GetValueForOption(qualityOption) > 100)
+    {
+        result.ErrorMessage = $"Must be less than 100{Environment.NewLine}必须小于100。";
+    }
+});
 
-var savePictureOption = new Option<bool>(
-    name: "--save-picture",
-    description: "储存原始图片文件。\nSave the Original Picture to file.");
+var extractOriginalPictureOption = new Option<bool>(
+    name: "--extract-original-picture",
+    description: $"Extract the Original Picture to file. {Environment.NewLine}提取原始的图片文件。");
 
-var rootCommand = new RootCommand($"修复奥迪汽车多媒体平台 MP3 歌曲不能显示封面的问题，将 MP3 文件的图片全部缩小到不大于 480x480 ，位置调整到封面(Cover-Front)。{Environment.NewLine}Fixed the issue that the cover picture of MP3 songs on Audi car MMI could not be displayed, and all the pictures in MP3 files were reduced to no larger than 480x480, and the position was adjusted to Cover-Front.");
+var saveModifiedAudioOption = new Option<bool>(
+    name: "--save-new-audio",
+    description: $"The modified audio file is save to a new file without modifying the original file, and appending the postfix to the file name. {Environment.NewLine}不修改原始文件，将修改后的音频文件储存为一个新文件，文件名附加后缀。");
+
+var extractModifiedPictureOption = new Option<bool>(
+    name: "--extract-new-picture",
+    description: $"Extract the picture in modified audio to file, and appending the postfix to the file name. {Environment.NewLine}提取修改后音频内的图片文件，文件名附加后缀。");
+
+var debugPostfixOption = new Option<string>(
+    name: "--postfix",
+    description: $"The postfix of the new filename when same a new file. {Environment.NewLine}储存新文件时的后缀名。",
+    getDefaultValue: () => "-id3");
+
+var rootCommand = new RootCommand($"Fixed the issue that the cover picture of MP3 songs on Audi car MMI could not be displayed, and all the pictures in MP3 files were reduced to no larger than {defaultLength}×{defaultLength}, and the position was adjusted to Cover-Front." + Environment.NewLine +
+    $"修复奥迪汽车多媒体平台 MP3 歌曲不能显示封面的问题，将 MP3 文件的图片全部缩小到不大于 {defaultLength}×{defaultLength} ，位置调整到封面(Cover-Front)。");
 rootCommand.AddOption(maxWidthOption);
 rootCommand.AddOption(maxHeightOption);
 rootCommand.AddOption(keepRatioOption);
 rootCommand.AddOption(qualityOption);
-rootCommand.AddOption(savePictureOption);
-rootCommand.Add(filesArgument);
+rootCommand.AddOption(extractOriginalPictureOption);
+rootCommand.AddOption(saveModifiedAudioOption);
+rootCommand.AddOption(extractModifiedPictureOption);
+rootCommand.AddOption(debugPostfixOption);
+rootCommand.Add(filesArgument); 
 
-rootCommand.SetHandler(ReadFile,
-    filesArgument, maxWidthOption, maxHeightOption, keepRatioOption, qualityOption, savePictureOption);
+rootCommand.SetHandler(ReadFile, filesArgument, new HandlerOptionsBinder(
+    maxWidthOption,
+    maxHeightOption,
+    keepRatioOption,
+    qualityOption,
+    extractOriginalPictureOption,
+    debugPostfixOption,
+    saveModifiedAudioOption,
+    extractModifiedPictureOption)
+);
 
 await rootCommand.InvokeAsync(args);
 
-static string GetExtFromMimeType(string MimeType)
+static void ReadFile(FileInfo[] files, HandlerOptions aHandlerOptions)
 {
-    return MimeType
-        .Split('/', StringSplitOptions.RemoveEmptyEntries)
-        .Last();
-}
-static void ReadFile(FileInfo[] files, uint maxWidth, uint maxHeight, bool keepRatio, byte quality, bool savePicture)
-{
+    uint maxWidth = aHandlerOptions.MaxWidth;
+    uint maxHeight = aHandlerOptions.MaxHeight;
+    bool keepRatio = aHandlerOptions.KeepRatio; 
+    byte jpegQuality = aHandlerOptions.JpegQuality; 
+    bool extractOriginalPicture = aHandlerOptions.ExtractOriginalPicture; 
+    string debugPostfixPicture = aHandlerOptions.DebugPostfixPicture; 
+    bool saveModifiedAudio = aHandlerOptions.SaveModifiedAudio; 
+    bool extractModifiedPicture = aHandlerOptions.ExtractModifiedPicture;
+
+#if DEBUG
+    extractOriginalPicture = true;
+    saveModifiedAudio = true;
+    extractModifiedPicture = true;
+#endif
+
     //获取JPEG的编码器信息
     ImageCodecInfo? jpegEncoder = ImageCodecInfo.GetImageDecoders().ToList().Find(codec =>
     {
@@ -73,7 +117,7 @@ static void ReadFile(FileInfo[] files, uint maxWidth, uint maxHeight, bool keepR
         if (!file.Exists) //如果文件不存在，则直接跳过
         {
             Console.ForegroundColor = ConsoleColor.Red;
-            Console.Error.WriteLine("Error:\tFile is not Exists.文件不存在。");
+            Console.Error.WriteLine("Error:\tFile is not Exists. 文件不存在。");
             Console.Error.WriteLine("\t{0}", file);
             Console.ResetColor();
             Console.WriteLine();
@@ -89,7 +133,7 @@ static void ReadFile(FileInfo[] files, uint maxWidth, uint maxHeight, bool keepR
         if (theTrack.EmbeddedPictures.Count == 0)
         {
             Console.ForegroundColor = ConsoleColor.Red;
-            Console.Error.WriteLine("Error:\tFile don't have any Picture.文件里没有内嵌图片。");
+            Console.Error.WriteLine("Error:\tFile don't have any Picture. 文件里没有内嵌图片。");
             Console.Error.WriteLine("\t{0}", file);
             Console.ResetColor();
             Console.WriteLine();
@@ -99,15 +143,13 @@ static void ReadFile(FileInfo[] files, uint maxWidth, uint maxHeight, bool keepR
         {
             PictureInfo pic = theTrack.EmbeddedPictures.First();
             Image image = Image.FromStream(new MemoryStream(pic.PictureData));
-#if DEBUG
-            savePicture = true;
-#endif
-            if (savePicture)
+            if (extractOriginalPicture)
             {
                 //保存图片原始数据
                 string coverFileName = Path.Combine(file.DirectoryName, $"{Path.GetFileNameWithoutExtension(file.Name)}-{pic.PicType}.{GetExtFromMimeType(pic.MimeType)}");
                 FileStream fileStream = new(coverFileName, FileMode.OpenOrCreate, FileAccess.Write);
                 fileStream.Write(pic.PictureData);
+                fileStream.Close();
             }
 
             Console.WriteLine("Picture Type:\t{0}", pic.PicType);
@@ -131,30 +173,30 @@ static void ReadFile(FileInfo[] files, uint maxWidth, uint maxHeight, bool keepR
                     int newWidth = Math.Min(image.Width, (int)Math.Round(image.Width * scaleW));
                     int newHeight = Math.Min(image.Height, (int)Math.Round(image.Height * scaleH));
 
-                    Console.WriteLine(string.Format("Resize Scale:\t{0}:{1}", scaleW, scaleH));
+                    Console.WriteLine("Resize Scale:\t{0}:{1}", scaleW, scaleH);
                     Bitmap newImage = new Bitmap(image, new Size(newWidth, newHeight));
 
                     //创建JPEG压缩的参数
                     EncoderParameters parameters = new(1);
-                    parameters.Param[0] = new EncoderParameter(Encoder.Quality, (long)quality);
+                    parameters.Param[0] = new EncoderParameter(Encoder.Quality, (long)jpegQuality);
 
                     //在内存中压缩转存一遍
                     MemoryStream jpegMemory = new();
                     newImage.Save(jpegMemory, jpegEncoder, parameters);
 
                     newPicture = PictureInfo.fromBinaryData(jpegMemory.ToArray(), PictureInfo.PIC_TYPE.Front);
-#if DEBUG
+                    if (extractModifiedPicture)
                     {
                         //保存新的封面图片
-                        string coverResizeFileName = Path.Combine(file.DirectoryName, $"{Path.GetFileNameWithoutExtension(file.Name)}-{newPicture.PicType}-resize.{GetExtFromMimeType(newPicture.MimeType)}");
+                        string coverResizeFileName = Path.Combine(file.DirectoryName, $"{Path.GetFileNameWithoutExtension(file.Name)}-{newPicture.PicType}{debugPostfixPicture}.{GetExtFromMimeType(newPicture.MimeType)}");
                         FileStream fileStream = new(coverResizeFileName, FileMode.OpenOrCreate, FileAccess.Write);
                         fileStream.Write(newPicture.PictureData);
+                        fileStream.Close();
                     }
-#endif
                 }
                 else
                 {
-                    Console.WriteLine(string.Format("Not Resize, just move to the Cover-Front. 不改变图像大小，仅移动到封面"));
+                    Console.WriteLine("Not Resize, just move to the Cover-Front. 不改变图像大小，仅移动到封面");
                     newPicture = PictureInfo.fromBinaryData(pic.PictureData, PictureInfo.PIC_TYPE.Front);
                 }
 
@@ -163,27 +205,78 @@ static void ReadFile(FileInfo[] files, uint maxWidth, uint maxHeight, bool keepR
 
                 // 添加封面
                 theTrack.EmbeddedPictures.Add(newPicture);
-
-#if DEBUG
-                //复制一份新的mp3来修改封面
-                string newFilename = Path.Combine(file.DirectoryName, $"{Path.GetFileNameWithoutExtension(file.Name)}-id3.{file.Extension}");
-                file.CopyTo(newFilename, true);
-                //将元数据复制到新文件
-                Track theCopyTrack = new Track(newFilename);
-                theCopyTrack.Remove(MetaDataIOFactory.TagType.ANY); //去除新文件里的所有内容
-                theTrack.CopyMetadataTo(theCopyTrack);
-                //保存新文件
-                theCopyTrack.Save();
-#else
-                // Save modifications on the disc
-                theTrack.Save();
-#endif
+                if (saveModifiedAudio)
+                {
+                    //储存到新文件
+                    string newFilename = Path.Combine(file.DirectoryName, $"{Path.GetFileNameWithoutExtension(file.Name)}{debugPostfixPicture}{file.Extension}");
+                    theTrack.SaveTo(newFilename);
+                } else
+                {
+                    //保存到原始文件
+                    theTrack.Save();
+                }
             }
             else
             {
-                Console.WriteLine(string.Format("Don't need do anything for Picture. 不需要对图片做任何处理"));
+                Console.WriteLine("Don't need do anything for Picture. 不需要对图片做任何处理");
             }
             Console.WriteLine();
         }
     }
+}
+
+static string GetExtFromMimeType(string MimeType)
+{
+    return MimeType
+        .Split('/', StringSplitOptions.RemoveEmptyEntries)
+        .Last();
+}
+
+public class HandlerOptions
+{
+    public uint MaxWidth { get; set; }
+    public uint MaxHeight { get; set; }
+    public bool KeepRatio { get; set; }
+    public byte JpegQuality { get; set; }
+    public bool ExtractOriginalPicture { get; set; }
+    public string DebugPostfixPicture { get; set; }
+    public bool SaveModifiedAudio { get; set; }
+    public bool ExtractModifiedPicture { get; set; }
+}
+
+public class HandlerOptionsBinder : BinderBase<HandlerOptions>
+{
+    private readonly Option<uint> _maxWidth;
+    private readonly Option<uint> _maxHeight;
+    private readonly Option<bool> _keepRatio;
+    private readonly Option<byte> _jpegQuality;
+    private readonly Option<bool> _extractOriginalPicture;
+    private readonly Option<string> _debugPostfixPicture;
+    private readonly Option<bool> _saveModifiedAudio;
+    private readonly Option<bool> _extractModifiedPicture;
+
+    public HandlerOptionsBinder(Option<uint> maxWidth, Option<uint> maxHeight, Option<bool> keepRatio, Option<byte> jpegQuality, Option<bool> extractOriginalPicture, Option<string> debugPostfixPicture, Option<bool> saveModifiedAudio, Option<bool> extractModifiedPicture)
+    {
+        _maxWidth = maxWidth;
+        _maxHeight = maxHeight;
+        _keepRatio = keepRatio;
+        _jpegQuality = jpegQuality;
+        _extractOriginalPicture = extractOriginalPicture;
+        _debugPostfixPicture = debugPostfixPicture;
+        _saveModifiedAudio = saveModifiedAudio;
+        _extractModifiedPicture = extractModifiedPicture;
+    }
+
+    protected override HandlerOptions GetBoundValue(BindingContext bindingContext) =>
+        new HandlerOptions
+        {
+            MaxWidth = bindingContext.ParseResult.GetValueForOption(_maxWidth),
+            MaxHeight = bindingContext.ParseResult.GetValueForOption(_maxHeight),
+            KeepRatio = bindingContext.ParseResult.GetValueForOption(_keepRatio),
+            JpegQuality = bindingContext.ParseResult.GetValueForOption(_jpegQuality),
+            ExtractOriginalPicture = bindingContext.ParseResult.GetValueForOption(_extractOriginalPicture),
+            DebugPostfixPicture = bindingContext.ParseResult.GetValueForOption(_debugPostfixPicture),
+            SaveModifiedAudio = bindingContext.ParseResult.GetValueForOption(_saveModifiedAudio),
+            ExtractModifiedPicture = bindingContext.ParseResult.GetValueForOption(_extractModifiedPicture),
+        };
 }

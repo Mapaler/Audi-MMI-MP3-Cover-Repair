@@ -7,7 +7,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <ApplicationIcon>Properties\aodi.ico</ApplicationIcon>
-    <VersionPrefix>2.0.1</VersionPrefix>
+    <VersionPrefix>2.1.0</VersionPrefix>
     <Authors>枫谷剑仙</Authors>
     <Copyright>Copyright © 2024 Mapaler</Copyright>
     <Description>修复奥迪汽车多媒体平台 MP3 歌曲不能显示封面的问题</Description>
@@ -21,7 +21,7 @@
   <ItemGroup>
     <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
     <PackageReference Include="System.Drawing.Common" Version="8.0.7" />
-    <PackageReference Include="z440.atl.core" Version="5.25.0" />
+    <PackageReference Include="z440.atl.core" Version="5.26.0" />
   </ItemGroup>
 
 </Project>
