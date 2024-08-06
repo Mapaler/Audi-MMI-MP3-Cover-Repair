@@ -2,7 +2,7 @@
   "profiles": {
     "Audi MMI MP3 Cover Repair": {
       "commandName": "Project",
-      "commandLineArgs": "\"C:\\Users\\Mapaler\\Desktop\\あよ - 21世紀少女.mp3\""
+      "commandLineArgs": "\"C:\\Users\\Mapaler\\Desktop\\あよ - 21世紀少女.mp3\" --postfix \"\""
     }
   }
 }

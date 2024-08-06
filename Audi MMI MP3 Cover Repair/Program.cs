@@ -38,9 +38,10 @@ var qualityOption = new Option<byte>(
 qualityOption.AddAlias("-q");
 qualityOption.AddValidator(result =>
 {
-    if (result.GetValueForOption(qualityOption) > 100)
+    byte quality = result.GetValueForOption(qualityOption);
+    if (quality > 100 || quality < 0)
     {
-        result.ErrorMessage = $"Must be less than 100{Environment.NewLine}必须小于100。";
+        result.ErrorMessage = $"JPEG quality can only be between 1-100.{Environment.NewLine}JPEG 质量只能位于 1-100 之间。";
     }
 });
 
@@ -60,6 +61,13 @@ var debugPostfixOption = new Option<string>(
     name: "--postfix",
     description: $"The postfix of the new filename when same a new file. {Environment.NewLine}储存新文件时的后缀名。",
     getDefaultValue: () => "-id3");
+debugPostfixOption.AddValidator(result =>
+{
+    if (result.GetValueForOption(saveModifiedAudioOption) && String.IsNullOrWhiteSpace(result.GetValueForOption(debugPostfixOption)))
+    {
+        result.ErrorMessage = $"When saving as a new file, you must have a filename postfix that is not empty.{Environment.NewLine}储存为新文件时必须拥有不为空的文件名后缀。";
+    }
+});
 
 var rootCommand = new RootCommand($"Fixed the issue that the cover picture of MP3 songs on Audi car MMI could not be displayed, and all the pictures in MP3 files were reduced to no larger than {defaultLength}×{defaultLength}, and the position was adjusted to Cover-Front." + Environment.NewLine +
     $"修复奥迪汽车多媒体平台 MP3 歌曲不能显示封面的问题，将 MP3 文件的图片全部缩小到不大于 {defaultLength}×{defaultLength} ，位置调整到封面(Cover-Front)。");
@@ -205,13 +213,22 @@ static void ReadFile(FileInfo[] files, HandlerOptions aHandlerOptions)
 
                 // 添加封面
                 theTrack.EmbeddedPictures.Add(newPicture);
-                if (saveModifiedAudio)
+                string newFilename;
+
+                if (saveModifiedAudio &&
+                    (newFilename = Path.Combine(file.DirectoryName, $"{Path.GetFileNameWithoutExtension(file.Name)}{debugPostfixPicture}{file.Extension}")) != theTrack.Path)
                 {
+#if DEBUG
+                    Console.WriteLine("储存到新文件 {0}", newFilename);
+#endif
                     //储存到新文件
-                    string newFilename = Path.Combine(file.DirectoryName, $"{Path.GetFileNameWithoutExtension(file.Name)}{debugPostfixPicture}{file.Extension}");
+                    //newFilename = Path.Combine(file.DirectoryName, $"{Path.GetFileNameWithoutExtension(file.Name)}{debugPostfixPicture}{file.Extension}");
                     theTrack.SaveTo(newFilename);
                 } else
                 {
+#if DEBUG
+                    Console.WriteLine("保存到原始文件");
+#endif
                     //保存到原始文件
                     theTrack.Save();
                 }
