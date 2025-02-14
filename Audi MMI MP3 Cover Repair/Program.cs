@@ -213,6 +213,8 @@ static void ReadFile(FileInfo[] files, HandlerOptions aHandlerOptions)
 
                 // 添加封面
                 theTrack.EmbeddedPictures.Add(newPicture);
+
+                Settings.ID3v2_tagSubVersion = 3;
                 string newFilename;
 
                 if (saveModifiedAudio &&
