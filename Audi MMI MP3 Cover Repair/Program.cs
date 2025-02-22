@@ -7,6 +7,7 @@ using ATL.AudioData;
 using ATL;
 using System.IO;
 using System.CommandLine.Binding;
+using System.Security.Cryptography.X509Certificates;
 
 const int defaultLength = 480;
 
@@ -131,21 +132,25 @@ static void ReadFile(FileInfo[] files, HandlerOptions aHandlerOptions)
             Console.WriteLine();
             continue;
         }
-        // Initialize with a file path
+        //读取音乐文件
         Track theTrack = new Track(file.FullName);
 
-        // Works the same way on any supported format (MP3, FLAC, WMA, SPC...)
         Console.WriteLine("Title:\t" + theTrack.Title);
 
-        // Get picture list
+        //是否有 ID3v2.3
+        bool hasID3v2_3 = theTrack.MetadataFormats.Any((Format format) => format.Name == "ID3v2.3");
+        if (!hasID3v2_3)
+        {
+            Console.WriteLine("Need change Metadata format to ID3v2.3. 需要改变元数据版本到ID3v2.3");
+        }
+        bool pictureChanged = false;
+
         if (theTrack.EmbeddedPictures.Count == 0)
         {
             Console.ForegroundColor = ConsoleColor.Red;
-            Console.Error.WriteLine("Error:\tFile don't have any Picture. 文件里没有内嵌图片。");
+            Console.Error.WriteLine("Error:\tAudio file don't embed any Picture. 音频文件里没有内嵌图片。");
             Console.Error.WriteLine("\t{0}", file);
             Console.ResetColor();
-            Console.WriteLine();
-            continue;
         }
         else
         {
@@ -210,37 +215,41 @@ static void ReadFile(FileInfo[] files, HandlerOptions aHandlerOptions)
 
                 // 清除全部图片
                 theTrack.EmbeddedPictures.Clear();
-
-                // 添加封面
+                // 重新添加封面
                 theTrack.EmbeddedPictures.Add(newPicture);
 
-                Settings.ID3v2_tagSubVersion = 3;
-                string newFilename;
-
-                if (saveModifiedAudio &&
-                    (newFilename = Path.Combine(file.DirectoryName, $"{Path.GetFileNameWithoutExtension(file.Name)}{debugPostfixPicture}{file.Extension}")) != theTrack.Path)
-                {
-#if DEBUG
-                    Console.WriteLine("储存到新文件 {0}", newFilename);
-#endif
-                    //储存到新文件
-                    //newFilename = Path.Combine(file.DirectoryName, $"{Path.GetFileNameWithoutExtension(file.Name)}{debugPostfixPicture}{file.Extension}");
-                    theTrack.SaveTo(newFilename);
-                } else
-                {
-#if DEBUG
-                    Console.WriteLine("保存到原始文件");
-#endif
-                    //保存到原始文件
-                    theTrack.Save();
-                }
+                pictureChanged = true;
             }
             else
             {
                 Console.WriteLine("Don't need do anything for Picture. 不需要对图片做任何处理");
             }
-            Console.WriteLine();
         }
+        if (!hasID3v2_3 || pictureChanged)
+        {
+            Settings.ID3v2_tagSubVersion = 3;
+            string newFilename;
+            pictureChanged = true;
+            if (saveModifiedAudio &&
+                (newFilename = Path.Combine(file.DirectoryName, $"{Path.GetFileNameWithoutExtension(file.Name)}{debugPostfixPicture}{file.Extension}")) != theTrack.Path)
+            {
+#if DEBUG
+                Console.WriteLine("储存到新文件 {0}", newFilename);
+#endif
+                //储存到新文件
+                //newFilename = Path.Combine(file.DirectoryName, $"{Path.GetFileNameWithoutExtension(file.Name)}{debugPostfixPicture}{file.Extension}");
+                theTrack.SaveTo(newFilename);
+            }
+            else
+            {
+#if DEBUG
+                Console.WriteLine("保存到原始文件");
+#endif
+                //保存到原始文件
+                theTrack.Save();
+            }
+        }
+        Console.WriteLine();
     }
 }
 
