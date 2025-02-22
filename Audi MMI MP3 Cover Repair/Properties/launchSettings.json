@@ -2,7 +2,7 @@
   "profiles": {
     "Audi MMI MP3 Cover Repair": {
       "commandName": "Project",
-      "commandLineArgs": "\"R:\\(V)・∀・(V) - Anything for You.mp3\" --postfix \"-debug\""
+      "commandLineArgs": "\"R:\\\\\" --postfix \"-debug\""
     }
   }
 }

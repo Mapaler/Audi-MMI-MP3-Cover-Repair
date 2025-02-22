@@ -7,13 +7,13 @@ using ATL.AudioData;
 using ATL;
 using System.IO;
 using System.CommandLine.Binding;
-using System.Security.Cryptography.X509Certificates;
+using Microsoft.VisualBasic;
 
 const int defaultLength = 480;
 
-var filesArgument = new Argument<FileInfo[]?>
-    (name: "files",
-    description: $"MP3 files that need to be modified.{Environment.NewLine}需要处理的多个 MP3 文件。");
+var filesArgument = new Argument<string[]>
+    (name: "paths",
+    description: $"MP3 files or directorys that need to be modified.{Environment.NewLine}需要处理的多个 MP3 文件或目录。");
 
 var maxWidthOption = new Option<uint>(
     name: "--max-width",
@@ -95,162 +95,200 @@ rootCommand.SetHandler(ReadFile, filesArgument, new HandlerOptionsBinder(
 
 await rootCommand.InvokeAsync(args);
 
-static void ReadFile(FileInfo[] files, HandlerOptions aHandlerOptions)
+static void ReadFile(string[] paths, HandlerOptions aHandlerOptions)
 {
+    //获取JPEG的编码器信息
+    ImageCodecInfo? jpegEncoder = ImageCodecInfo.GetImageEncoders().ToList().Find(codec =>
+    {
+        return codec.FormatID == ImageFormat.Jpeg.Guid;
+    });
+    if (jpegEncoder == null)
+    {
+        Console.Error.WriteLine("Error:\tNot have JPEG Image Encoder. 没有 JPEG 图片编码器。");
+        return;
+    }
+
+    List<FileInfo> files = [];
+    foreach (string path in paths)
+    {
+        if (File.Exists(path) && Path.GetExtension(path) == ".mp3")
+        {
+            files.Add(new FileInfo(path));
+        }
+        else if (Directory.Exists(path))
+        {
+            files.AddRange(TraversingDirectory(new DirectoryInfo(path)));
+        }
+    }
+
+    uint currentIndex = 0;
+    foreach (FileInfo file in files)
+    {
+        currentIndex++;
+        Console.WriteLine("Index:\t{0}/{1}", currentIndex, files.Count);
+        ConvertMetadata(file, aHandlerOptions, jpegEncoder);
+    }
+}
+//递归遍历文件夹
+static List<FileInfo> TraversingDirectory(DirectoryInfo directory)
+{
+    List<FileInfo> files = [];
+    Console.WriteLine("Traversing 遍历:\t{0}", directory.FullName);
+    foreach (FileInfo file in directory.GetFiles("*.mp3"))
+    {
+        files.Add((FileInfo)file);
+    }
+    foreach (DirectoryInfo subDir in directory.GetDirectories())
+    {
+        files.AddRange(TraversingDirectory(subDir));
+    }
+    return files;
+}
+
+static void ConvertMetadata(FileInfo file, HandlerOptions aHandlerOptions, ImageCodecInfo jpegEncoder)
+{
+    if (!file.Exists) //如果文件不存在，则直接跳过
+    {
+        Console.ForegroundColor = ConsoleColor.Red;
+        Console.Error.WriteLine("Error:\tFile is not Exists. 文件不存在。");
+        Console.Error.WriteLine("\t{0}", file);
+        Console.ResetColor();
+        Console.WriteLine();
+        return;
+    }
+
     uint maxWidth = aHandlerOptions.MaxWidth;
     uint maxHeight = aHandlerOptions.MaxHeight;
-    bool keepRatio = aHandlerOptions.KeepRatio; 
-    byte jpegQuality = aHandlerOptions.JpegQuality; 
-    bool extractOriginalPicture = aHandlerOptions.ExtractOriginalPicture; 
-    string debugPostfixPicture = aHandlerOptions.DebugPostfixPicture; 
-    bool saveModifiedAudio = aHandlerOptions.SaveModifiedAudio; 
+    bool keepRatio = aHandlerOptions.KeepRatio;
+    byte jpegQuality = aHandlerOptions.JpegQuality;
+    bool extractOriginalPicture = aHandlerOptions.ExtractOriginalPicture;
+    string debugPostfixPicture = aHandlerOptions.DebugPostfixPicture;
+    bool saveModifiedAudio = aHandlerOptions.SaveModifiedAudio;
     bool extractModifiedPicture = aHandlerOptions.ExtractModifiedPicture;
-
 #if DEBUG
     extractOriginalPicture = true;
     saveModifiedAudio = true;
     extractModifiedPicture = true;
 #endif
 
-    //获取JPEG的编码器信息
-    ImageCodecInfo? jpegEncoder = ImageCodecInfo.GetImageDecoders().ToList().Find(codec =>
+    //读取音乐文件
+    Track theTrack = new(file.FullName);
+
+    Console.WriteLine("Title:\t" + theTrack.Title);
+
+    //是否有 ID3v2.3
+    bool hasID3v2_3 = theTrack.MetadataFormats.Any((Format format) => format.Name == "ID3v2.3");
+    if (!hasID3v2_3)
     {
-        return codec.FormatID == ImageFormat.Jpeg.Guid;
-    });
+        Console.WriteLine("Need change Metadata format to ID3v2.3. 需要改变元数据版本到ID3v2.3");
+    }
+    bool pictureChanged = false;
 
-    uint currentIndex = 0;
-    foreach (FileInfo file in files)
+    if (theTrack.EmbeddedPictures.Count == 0)
     {
-        currentIndex++;
-        Console.WriteLine("Index:\t{0}/{1}", currentIndex, files.Length);
-        if (!file.Exists) //如果文件不存在，则直接跳过
+        Console.ForegroundColor = ConsoleColor.Red;
+        Console.Error.WriteLine("Error:\tAudio file don't embed any Picture. 音频文件里没有内嵌图片。");
+        Console.Error.WriteLine("\t{0}", file);
+        Console.ResetColor();
+    }
+    else
+    {
+        PictureInfo pic = theTrack.EmbeddedPictures.First();
+        Image image = Image.FromStream(new MemoryStream(pic.PictureData));
+        if (extractOriginalPicture)
         {
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.Error.WriteLine("Error:\tFile is not Exists. 文件不存在。");
-            Console.Error.WriteLine("\t{0}", file);
-            Console.ResetColor();
-            Console.WriteLine();
-            continue;
+            //保存图片原始数据
+            string coverFileName = Path.Combine(file.DirectoryName, $"{Path.GetFileNameWithoutExtension(file.Name)}-{pic.PicType}.{GetExtFromMimeType(pic.MimeType)}");
+            FileStream fileStream = new(coverFileName, FileMode.OpenOrCreate, FileAccess.Write);
+            fileStream.Write(pic.PictureData);
+            fileStream.Close();
         }
-        //读取音乐文件
-        Track theTrack = new Track(file.FullName);
 
-        Console.WriteLine("Title:\t" + theTrack.Title);
+        Console.WriteLine("Picture Type:\t{0}", pic.PicType);
+        Console.WriteLine("Size:\t{0}x{1}", image.Width, image.Height);
 
-        //是否有 ID3v2.3
-        bool hasID3v2_3 = theTrack.MetadataFormats.Any((Format format) => format.Name == "ID3v2.3");
-        if (!hasID3v2_3)
+        if (pic.PicType != PictureInfo.PIC_TYPE.Front || //不是封面也要处理
+            image.RawFormat.ToString() != ImageFormat.Jpeg.ToString() || //不是 Jpeg
+            image.Width > maxWidth || image.Height > maxHeight) //宽高大于设定
         {
-            Console.WriteLine("Need change Metadata format to ID3v2.3. 需要改变元数据版本到ID3v2.3");
-        }
-        bool pictureChanged = false;
 
-        if (theTrack.EmbeddedPictures.Count == 0)
-        {
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.Error.WriteLine("Error:\tAudio file don't embed any Picture. 音频文件里没有内嵌图片。");
-            Console.Error.WriteLine("\t{0}", file);
-            Console.ResetColor();
+            PictureInfo newPicture;
+            if (image.RawFormat.ToString() != ImageFormat.Jpeg.ToString() || image.Width > maxWidth || image.Height > maxHeight)
+            {
+                double scaleW = (double)maxWidth / image.Width; //宽度缩小比例
+                double scaleH = (double)maxHeight / image.Height; //高度缩小比例
+                if (keepRatio)
+                {
+                    scaleW = Math.Min(scaleW, scaleH);
+                    scaleH = Math.Min(scaleW, scaleH);
+                }
+                int newWidth = Math.Min(image.Width, (int)Math.Round(image.Width * scaleW));
+                int newHeight = Math.Min(image.Height, (int)Math.Round(image.Height * scaleH));
+
+                Console.WriteLine("Resize Scale:\t{0}:{1}", scaleW, scaleH);
+                Bitmap newImage = new(image, new Size(newWidth, newHeight));
+
+                //创建JPEG压缩的参数
+                EncoderParameters parameters = new(1);
+                parameters.Param[0] = new EncoderParameter(Encoder.Quality, (long)jpegQuality);
+
+                //在内存中压缩转存一遍
+                MemoryStream jpegMemory = new();
+                newImage.Save(jpegMemory, jpegEncoder, parameters);
+
+                newPicture = PictureInfo.fromBinaryData(jpegMemory.ToArray(), PictureInfo.PIC_TYPE.Front);
+                if (extractModifiedPicture)
+                {
+                    //保存新的封面图片
+                    string coverResizeFileName = Path.Combine(file.DirectoryName, $"{Path.GetFileNameWithoutExtension(file.Name)}-{newPicture.PicType}{debugPostfixPicture}.{GetExtFromMimeType(newPicture.MimeType)}");
+                    FileStream fileStream = new(coverResizeFileName, FileMode.OpenOrCreate, FileAccess.Write);
+                    fileStream.Write(newPicture.PictureData);
+                    fileStream.Close();
+                }
+            }
+            else
+            {
+                Console.WriteLine("Not Resize, just move to the Cover-Front. 不改变图像大小，仅移动到封面");
+                newPicture = PictureInfo.fromBinaryData(pic.PictureData, PictureInfo.PIC_TYPE.Front);
+            }
+
+            // 清除全部图片
+            theTrack.EmbeddedPictures.Clear();
+            // 重新添加封面
+            theTrack.EmbeddedPictures.Add(newPicture);
+
+            pictureChanged = true;
         }
         else
         {
-            PictureInfo pic = theTrack.EmbeddedPictures.First();
-            Image image = Image.FromStream(new MemoryStream(pic.PictureData));
-            if (extractOriginalPicture)
-            {
-                //保存图片原始数据
-                string coverFileName = Path.Combine(file.DirectoryName, $"{Path.GetFileNameWithoutExtension(file.Name)}-{pic.PicType}.{GetExtFromMimeType(pic.MimeType)}");
-                FileStream fileStream = new(coverFileName, FileMode.OpenOrCreate, FileAccess.Write);
-                fileStream.Write(pic.PictureData);
-                fileStream.Close();
-            }
-
-            Console.WriteLine("Picture Type:\t{0}", pic.PicType);
-            Console.WriteLine("Size:\t{0}x{1}", image.Width, image.Height);
-
-            if (pic.PicType != PictureInfo.PIC_TYPE.Front || //不是封面也要处理
-                image.RawFormat.ToString() != ImageFormat.Jpeg.ToString() || //不是 Jpeg
-                image.Width > maxWidth || image.Height > maxHeight) //宽高大于设定
-            {
-
-                PictureInfo newPicture;
-                if (image.RawFormat.ToString() != ImageFormat.Jpeg.ToString() || image.Width > maxWidth || image.Height > maxHeight)
-                {
-                    double scaleW = (double)maxWidth / image.Width; //宽度缩小比例
-                    double scaleH = (double)maxHeight / image.Height; //高度缩小比例
-                    if (keepRatio)
-                    {
-                        scaleW = Math.Min(scaleW, scaleH);
-                        scaleH = Math.Min(scaleW, scaleH);
-                    }
-                    int newWidth = Math.Min(image.Width, (int)Math.Round(image.Width * scaleW));
-                    int newHeight = Math.Min(image.Height, (int)Math.Round(image.Height * scaleH));
-
-                    Console.WriteLine("Resize Scale:\t{0}:{1}", scaleW, scaleH);
-                    Bitmap newImage = new Bitmap(image, new Size(newWidth, newHeight));
-
-                    //创建JPEG压缩的参数
-                    EncoderParameters parameters = new(1);
-                    parameters.Param[0] = new EncoderParameter(Encoder.Quality, (long)jpegQuality);
-
-                    //在内存中压缩转存一遍
-                    MemoryStream jpegMemory = new();
-                    newImage.Save(jpegMemory, jpegEncoder, parameters);
-
-                    newPicture = PictureInfo.fromBinaryData(jpegMemory.ToArray(), PictureInfo.PIC_TYPE.Front);
-                    if (extractModifiedPicture)
-                    {
-                        //保存新的封面图片
-                        string coverResizeFileName = Path.Combine(file.DirectoryName, $"{Path.GetFileNameWithoutExtension(file.Name)}-{newPicture.PicType}{debugPostfixPicture}.{GetExtFromMimeType(newPicture.MimeType)}");
-                        FileStream fileStream = new(coverResizeFileName, FileMode.OpenOrCreate, FileAccess.Write);
-                        fileStream.Write(newPicture.PictureData);
-                        fileStream.Close();
-                    }
-                }
-                else
-                {
-                    Console.WriteLine("Not Resize, just move to the Cover-Front. 不改变图像大小，仅移动到封面");
-                    newPicture = PictureInfo.fromBinaryData(pic.PictureData, PictureInfo.PIC_TYPE.Front);
-                }
-
-                // 清除全部图片
-                theTrack.EmbeddedPictures.Clear();
-                // 重新添加封面
-                theTrack.EmbeddedPictures.Add(newPicture);
-
-                pictureChanged = true;
-            }
-            else
-            {
-                Console.WriteLine("Don't need do anything for Picture. 不需要对图片做任何处理");
-            }
+            Console.WriteLine("Don't need do anything for Picture. 不需要对图片做任何处理");
         }
-        if (!hasID3v2_3 || pictureChanged)
-        {
-            Settings.ID3v2_tagSubVersion = 3;
-            string newFilename;
-            pictureChanged = true;
-            if (saveModifiedAudio &&
-                (newFilename = Path.Combine(file.DirectoryName, $"{Path.GetFileNameWithoutExtension(file.Name)}{debugPostfixPicture}{file.Extension}")) != theTrack.Path)
-            {
-#if DEBUG
-                Console.WriteLine("储存到新文件 {0}", newFilename);
-#endif
-                //储存到新文件
-                //newFilename = Path.Combine(file.DirectoryName, $"{Path.GetFileNameWithoutExtension(file.Name)}{debugPostfixPicture}{file.Extension}");
-                theTrack.SaveTo(newFilename);
-            }
-            else
-            {
-#if DEBUG
-                Console.WriteLine("保存到原始文件");
-#endif
-                //保存到原始文件
-                theTrack.Save();
-            }
-        }
-        Console.WriteLine();
     }
+    if (!hasID3v2_3 || pictureChanged)
+    {
+        Settings.ID3v2_tagSubVersion = 3;
+        string newFilename;
+        pictureChanged = true;
+        if (saveModifiedAudio &&
+            (newFilename = Path.Combine(file.DirectoryName, $"{Path.GetFileNameWithoutExtension(file.Name)}{debugPostfixPicture}{file.Extension}")) != theTrack.Path)
+        {
+#if DEBUG
+            Console.WriteLine("储存到新文件 {0}", newFilename);
+#endif
+            //储存到新文件
+            //newFilename = Path.Combine(file.DirectoryName, $"{Path.GetFileNameWithoutExtension(file.Name)}{debugPostfixPicture}{file.Extension}");
+            theTrack.SaveTo(newFilename);
+        }
+        else
+        {
+#if DEBUG
+            Console.WriteLine("保存到原始文件");
+#endif
+            //保存到原始文件
+            theTrack.Save();
+        }
+    }
+    Console.WriteLine();
 }
 
 static string GetExtFromMimeType(string MimeType)
@@ -296,7 +334,7 @@ public class HandlerOptionsBinder : BinderBase<HandlerOptions>
     }
 
     protected override HandlerOptions GetBoundValue(BindingContext bindingContext) =>
-        new HandlerOptions
+        new()
         {
             MaxWidth = bindingContext.ParseResult.GetValueForOption(_maxWidth),
             MaxHeight = bindingContext.ParseResult.GetValueForOption(_maxHeight),
