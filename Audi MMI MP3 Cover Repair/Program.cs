@@ -3,6 +3,7 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.Diagnostics;
 using System.CommandLine;
+using System.CommandLine.Parsing;
 using ATL.AudioData;
 using ATL;
 using System.IO;
@@ -134,13 +135,37 @@ static List<FileInfo> TraversingDirectory(DirectoryInfo directory)
 {
     List<FileInfo> files = [];
     Console.WriteLine("Traversing 遍历:\t{0}", directory.FullName);
-    foreach (FileInfo file in directory.GetFiles("*.mp3"))
+
+    try
     {
-        files.Add((FileInfo)file);
+        foreach (FileInfo file in directory.GetFiles("*.mp3"))
+        {
+            files.Add(file);
+        }
     }
-    foreach (DirectoryInfo subDir in directory.GetDirectories())
+    catch (UnauthorizedAccessException ex)
     {
-        files.AddRange(TraversingDirectory(subDir));
+        Console.WriteLine($"警告: 无法访问目录 {directory.FullName} 的文件: {ex.Message}");
+    }
+    catch (DirectoryNotFoundException ex)
+    {
+        Console.WriteLine($"警告: 目录不存在 {directory.FullName}: {ex.Message}");
+    }
+
+    try
+    {
+        foreach (DirectoryInfo subDir in directory.GetDirectories())
+        {
+            files.AddRange(TraversingDirectory(subDir));
+        }
+    }
+    catch (UnauthorizedAccessException ex)
+    {
+        Console.WriteLine($"警告: 无法访问目录 {directory.FullName} 的子目录: {ex.Message}");
+    }
+    catch (DirectoryNotFoundException ex)
+    {
+        Console.WriteLine($"警告: 目录不存在 {directory.FullName}: {ex.Message}");
     }
     return files;
 }
