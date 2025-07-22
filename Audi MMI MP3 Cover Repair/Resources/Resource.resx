@@ -1,0 +1,280 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="DES_Paths" xml:space="preserve">
+    <value>MP3 files or directorys that need to be modified.</value>
+    <comment>参数介绍：输入路径</comment>
+  </data>
+  <data name="DES_MaxWidth" xml:space="preserve">
+    <value>The max Width of the new JPEG file.</value>
+    <comment>选项介绍：最大宽度</comment>
+  </data>
+  <data name="DES_MaxHeight" xml:space="preserve">
+    <value>The max Height of the new JPEG file.</value>
+    <comment>选项介绍：最大宽度</comment>
+  </data>
+  <data name="DES_Soft" xml:space="preserve">
+    <value>Fixed the issue that the cover picture of MP3 songs on Audi car MMI could not be displayed, and all the pictures in MP3 files were reduced to no larger than {0}×{1}, and the position was adjusted to Cover-Front.</value>
+    <comment>程序介绍</comment>
+  </data>
+  <data name="DES_KeepRatio" xml:space="preserve">
+    <value>Maintain the aspect ratio of the image.</value>
+    <comment>选项介绍：保持宽高比</comment>
+  </data>
+  <data name="DES_JpegQuality" xml:space="preserve">
+    <value>The compressed quality of the JPEG cover picture in new audio file.</value>
+    <comment>选项介绍：图像质量</comment>
+  </data>
+  <data name="ERR_Range_JpegQuality" xml:space="preserve">
+    <value>JPEG quality can only be between {0}-{1}.</value>
+    <comment>范围错误：图像质量</comment>
+  </data>
+  <data name="DES_ExtractOriginalPicture" xml:space="preserve">
+    <value>Extract the Original Picture to file.</value>
+    <comment>选项介绍：提取原始图像</comment>
+  </data>
+  <data name="DES_SaveNewAudio" xml:space="preserve">
+    <value>The modified audio file is save to a new file without modifying the original file, and appending the postfix to the file name.</value>
+    <comment>选项介绍：存新文件</comment>
+  </data>
+  <data name="DES_ExtractNewPicture" xml:space="preserve">
+    <value>Extract the picture in modified audio to file, and appending the postfix to the file name.</value>
+    <comment>选项介绍：提取新图像</comment>
+  </data>
+  <data name="DES_Postfix" xml:space="preserve">
+    <value>The postfix of the new filename when same a new file.</value>
+    <comment>选项介绍：后缀名</comment>
+  </data>
+  <data name="ERR_Empty_Postfix" xml:space="preserve">
+    <value>When saving as a new file, you must have a filename postfix that is not empty.</value>
+    <comment>空值错误：图像质量</comment>
+  </data>
+  <data name="ERR_Empty_Paths" xml:space="preserve">
+    <value>No files or directories are being passed.</value>
+    <comment>空值错误：输入文件</comment>
+  </data>
+  <data name="HELP_ShowHelp" xml:space="preserve">
+    <value>Use "{0}" to show help.</value>
+    <comment>帮助：显示帮助</comment>
+  </data>
+  <data name="ERR_NoJpegEncoder" xml:space="preserve">
+    <value>Not have JPEG Image Encoder.</value>
+    <comment>错误：没有jpg编码器</comment>
+  </data>
+  <data name="INFO_ListFile" xml:space="preserve">
+    <value>Searching for all MP3 files.</value>
+    <comment>消息：列出文件</comment>
+  </data>
+  <data name="INFO_Traversing" xml:space="preserve">
+    <value>Traversing</value>
+    <comment>消息：遍历内容</comment>
+  </data>
+  <data name="INFO_SongTitle" xml:space="preserve">
+    <value>Title</value>
+    <comment>消息：歌曲标题</comment>
+  </data>
+  <data name="INFO_SongFile" xml:space="preserve">
+    <value>File</value>
+    <comment>消息：歌曲文件</comment>
+  </data>
+  <data name="INFO_Processing" xml:space="preserve">
+    <value>Processing</value>
+    <comment>信息：当前处理</comment>
+  </data>
+  <data name="ERR_NotExist" xml:space="preserve">
+    <value>"{0}" is not exists.</value>
+    <comment>错误：路径不存在</comment>
+  </data>
+  <data name="ERR_NoPermission" xml:space="preserve">
+    <value>No permission to access "{0}".</value>
+    <comment>错误：路径不存在</comment>
+  </data>
+  <data name="WORD_File" xml:space="preserve">
+    <value>Files</value>
+    <comment>单词：文件</comment>
+  </data>
+  <data name="WORD_Path" xml:space="preserve">
+    <value>Paths</value>
+    <comment>单词：路径</comment>
+  </data>
+  <data name="WORD_Directory" xml:space="preserve">
+    <value>Directories</value>
+    <comment>单词：目录</comment>
+  </data>
+  <data name="WORD_SubDirectory" xml:space="preserve">
+    <value>Subdirectories</value>
+    <comment>单词：子目录</comment>
+  </data>
+  <data name="WORD_Error" xml:space="preserve">
+    <value>Error</value>
+    <comment>单词：错误</comment>
+  </data>
+  <data name="WORD_Warning" xml:space="preserve">
+    <value>Warning</value>
+    <comment>单词：错误</comment>
+  </data>
+  <data name="PREP_Colon" xml:space="preserve">
+    <value>{0}: {1}</value>
+    <comment>介词：冒号</comment>
+  </data>
+  <data name="PREP_Percent" xml:space="preserve">
+    <value>{0}/{1}({2:P2})</value>
+    <comment>介词：百分比</comment>
+  </data>
+  <data name="PREP_Size" xml:space="preserve">
+    <value>{0}x{1}</value>
+    <comment>介词：尺寸</comment>
+  </data>
+  <data name="PREP_Ratio" xml:space="preserve">
+    <value>{0}:{1}</value>
+    <comment>介词：比值</comment>
+  </data>
+  <data name="PREP_Of" xml:space="preserve">
+    <value>{0} of {1}</value>
+    <comment>介词：文件夹内的文件</comment>
+  </data>
+  <data name="INFO_ChangeToID3v23" xml:space="preserve">
+    <value>Need change Metadata format to ID3v2.3.</value>
+    <comment>消息：更改到 ID3v2.3</comment>
+  </data>
+  <data name="ERR_NoEmbedPicture" xml:space="preserve">
+    <value>Audio file don't embed any Picture.</value>
+    <comment>错误：没有内嵌图像</comment>
+  </data>
+  <data name="INFO_PictureType" xml:space="preserve">
+    <value>Picture Type</value>
+    <comment>信息：图片类型</comment>
+  </data>
+  <data name="INFO_ResizeScale" xml:space="preserve">
+    <value>Resize Scale</value>
+    <comment>信息：图片类型</comment>
+  </data>
+  <data name="INFO_PictureSize" xml:space="preserve">
+    <value>Picture Size</value>
+    <comment>信息：图片大小</comment>
+  </data>
+  <data name="INFO_NoNeedProcessImage" xml:space="preserve">
+    <value>Don't need do anything for Picture.</value>
+    <comment>消息：不需要处理图片</comment>
+  </data>
+  <data name="INFO_MoveToFront" xml:space="preserve">
+    <value>Move image to the Cover-Front.</value>
+    <comment>消息：移动图片到封面</comment>
+  </data>
+</root>

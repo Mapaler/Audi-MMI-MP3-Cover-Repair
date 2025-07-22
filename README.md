@@ -46,5 +46,4 @@ AMMICP.exe -h
 ```
 
 ## 使用开源库
-* [System.CommandLine](https://www.nuget.org/packages/System.CommandLine) - .NET CommandLine parser
 * [Audio Tools Library (ATL) for .NET](https://www.nuget.org/packages/z440.atl.core/) - .NET ID3 Tagging Library
