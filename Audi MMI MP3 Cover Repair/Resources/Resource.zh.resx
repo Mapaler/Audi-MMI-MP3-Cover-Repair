@@ -201,6 +201,9 @@
   <data name="WORD_Warning" xml:space="preserve">
     <value>警告</value>
   </data>
+  <data name="WORD_SoftTitle" xml:space="preserve">
+    <value>奥迪汽车多媒体交互系统 MP3 音乐文件封面修复</value>
+  </data>
   <data name="PREP_Colon" xml:space="preserve">
     <value>{0}： {1}</value>
   </data>
@@ -223,7 +226,7 @@
     <value>音频文件里没有内嵌图片。</value>
   </data>
   <data name="INFO_PictureType" xml:space="preserve">
-    <value>图片类型</value>
+    <value>图片位置</value>
   </data>
   <data name="INFO_ResizeScale" xml:space="preserve">
     <value>调整缩放大小</value>
@@ -233,6 +236,9 @@
   </data>
   <data name="INFO_NoNeedProcessImage" xml:space="preserve">
     <value>不需要对图片做任何处理。</value>
+  </data>
+  <data name="INFO_AllDone" xml:space="preserve">
+    <value>所有内容处理完成。</value>
   </data>
   <data name="INFO_MoveToFront" xml:space="preserve">
     <value>将图片移动到封面。</value>

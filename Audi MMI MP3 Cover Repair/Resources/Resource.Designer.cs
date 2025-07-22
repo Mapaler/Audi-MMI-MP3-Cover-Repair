@@ -223,6 +223,15 @@ namespace Audi_MMI_MP3_Cover_Repair.Resources {
         }
         
         /// <summary>
+        ///   查找类似 All content is processed. 的本地化字符串。
+        /// </summary>
+        internal static string INFO_AllDone {
+            get {
+                return ResourceManager.GetString("INFO_AllDone", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 Need change Metadata format to ID3v2.3. 的本地化字符串。
         /// </summary>
         internal static string INFO_ChangeToID3v23 {
@@ -268,7 +277,7 @@ namespace Audi_MMI_MP3_Cover_Repair.Resources {
         }
         
         /// <summary>
-        ///   查找类似 Picture Type 的本地化字符串。
+        ///   查找类似 Picture Place 的本地化字符串。
         /// </summary>
         internal static string INFO_PictureType {
             get {
@@ -399,6 +408,15 @@ namespace Audi_MMI_MP3_Cover_Repair.Resources {
         internal static string WORD_Path {
             get {
                 return ResourceManager.GetString("WORD_Path", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Audi Multi Media Interface MP3 Cover Repair 的本地化字符串。
+        /// </summary>
+        internal static string WORD_SoftTitle {
+            get {
+                return ResourceManager.GetString("WORD_SoftTitle", resourceCulture);
             }
         }
         

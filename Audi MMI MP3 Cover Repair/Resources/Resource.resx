@@ -229,6 +229,10 @@
     <value>Warning</value>
     <comment>单词：错误</comment>
   </data>
+  <data name="WORD_SoftTitle" xml:space="preserve">
+    <value>Audi Multi Media Interface MP3 Cover Repair</value>
+    <comment>单词：软件标题</comment>
+  </data>
   <data name="PREP_Colon" xml:space="preserve">
     <value>{0}: {1}</value>
     <comment>介词：冒号</comment>
@@ -258,8 +262,8 @@
     <comment>错误：没有内嵌图像</comment>
   </data>
   <data name="INFO_PictureType" xml:space="preserve">
-    <value>Picture Type</value>
-    <comment>信息：图片类型</comment>
+    <value>Picture Place</value>
+    <comment>信息：图片位置类型</comment>
   </data>
   <data name="INFO_ResizeScale" xml:space="preserve">
     <value>Resize Scale</value>
@@ -271,6 +275,10 @@
   </data>
   <data name="INFO_NoNeedProcessImage" xml:space="preserve">
     <value>Don't need do anything for Picture.</value>
+    <comment>消息：不需要处理图片</comment>
+  </data>
+  <data name="INFO_AllDone" xml:space="preserve">
+    <value>All content is processed.</value>
     <comment>消息：不需要处理图片</comment>
   </data>
   <data name="INFO_MoveToFront" xml:space="preserve">

@@ -3,10 +3,12 @@
 ![预览图](doc/preview.webp)
 
 此程序可以将 MP3 文件内嵌的第一张图片
-* 调整大小（默认缩小到不大于 480x480）；
-* 转为 JPEG 格式；
+* 调整大小（默认缩小到不大于 480×480）；
+* 转为 JPEG 格式（默认质量 90）；
 * 位置调整到专辑封面；
-* 元数据版本设置为 ID3v2.3。
+
+然后再执行
+* MP3 元数据版本设置为 ID3v2.3。
 
 这样处理后，我的迪汽车多媒体系统就能正常显示封面了。
 
@@ -28,7 +30,7 @@
 
 ## 如何使用
 由于使用 [System.Drawing.Common](https://learn.microsoft.com/dotnet/core/compatibility/core-libraries/6.0/system-drawing-common-windows-only) 处理图片，因此仅支持 Microsoft Windows 操作系统。
-### v2.3 版本安装 .Net 8 运行时
+### v3.0 版本安装 .Net 8 运行时
 
 示例
 ```bat
@@ -37,7 +39,7 @@ AMMICP.exe C:\music\a.mp3 "D:\music\good song.mp3" E:\a.mp3
 
 也可以递归处理文件夹
 ```bat
-AMMICP.exe "C:\music folder"
+AMMICP.exe "C:\music folder1" "C:\music folder2"
 ```
 
 查看帮助信息可以获取更多可设置参数

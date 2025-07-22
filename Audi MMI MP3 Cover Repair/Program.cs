@@ -1,20 +1,11 @@
 ﻿// See https://aka.ms/new-console-template for more information
 using ATL;
-using ATL.AudioData;
 using Audi_MMI_MP3_Cover_Repair;
 using Audi_MMI_MP3_Cover_Repair.Resources;
 using System.CommandLine;
-using System.CommandLine.Binding;
-using System.CommandLine.Parsing;
-using System.Diagnostics;
 using System.Drawing;
-using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
-using System.Globalization;
-using System.IO;
 using System.Reflection;
-using static System.Formats.Asn1.AsnWriter;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 const int defaultMaxWidth = 480;
 const int defaultMaxHeight = 480;
@@ -23,6 +14,9 @@ const byte JpegQualityMax = 100;
 const byte JpegQualityMin = 0;
 
 Assembly assembly = Assembly.GetExecutingAssembly();
+
+Console.Title = Resource.WORD_SoftTitle; //软件的标题
+
 //获取JPEG的编码器信息
 ImageCodecInfo? jpegEncoder = ImageCodecInfo.GetImageEncoders().ToList().Find(codec =>
 {
@@ -154,7 +148,7 @@ static void ReadFiles(FileSystemInfo[] paths,
     {
         if (!path.Exists)
         {
-            ConsoleHelper.WriteError(Resource.ERR_NotExist, Resource.WORD_Path);
+            ConsoleHelper.WriteError(Resource.ERR_NotExist, path);
             continue;
         }
         if (path.Attributes.HasFlag(FileAttributes.Directory))
@@ -172,12 +166,17 @@ static void ReadFiles(FileSystemInfo[] paths,
     foreach (FileInfo file in files)
     {
         currentIndex++;
-        
-        ConsoleHelper.WriteColorLine(ConsoleColor.White, ConsoleColor.DarkCyan, Resource.PREP_Colon,
-            Resource.INFO_Processing,
-            string.Format(Resource.PREP_Percent, currentIndex, maxCount, (double)currentIndex / (double)maxCount));
+
+        string progress = string.Format(Resource.PREP_Percent, currentIndex, maxCount, (double)currentIndex / (double)maxCount);
+        ConsoleHelper.WriteColorLine(ConsoleColor.White, ConsoleColor.DarkCyan,
+            Resource.PREP_Colon, Resource.INFO_Processing, progress);
+        Console.Title = progress;
         ConvertMetadata(file, maxWidth, maxHeight, keepRatio, jpegQuality, extractOriginalPicture, debugPostfixPicture, saveModifiedAudio, extractModifiedPicture, jpegEncoder);
     }
+    Console.Title = Resource.WORD_SoftTitle; //软件的标题
+
+    ConsoleHelper.WriteColorLine(ConsoleColor.White, "====================");
+    ConsoleHelper.WriteColorLine(ConsoleColor.Green, Resource.INFO_AllDone);
 }
 //递归遍历文件夹
 static List<FileInfo> TraversingDirectory(DirectoryInfo directory)
@@ -191,7 +190,7 @@ static List<FileInfo> TraversingDirectory(DirectoryInfo directory)
     }
     catch (UnauthorizedAccessException ex)
     {
-        ConsoleHelper.WriteWarning(Resource.ERR_NoPermission, Resource.PREP_Colon, Resource.WORD_File, directory.FullName);
+        ConsoleHelper.WriteWarning(Resource.ERR_NoPermission, string.Format(Resource.PREP_Colon, Resource.WORD_File, directory.FullName));
         ConsoleHelper.WriteWarning(ex.Message);
     }
     catch (DirectoryNotFoundException ex)
@@ -209,7 +208,7 @@ static List<FileInfo> TraversingDirectory(DirectoryInfo directory)
     }
     catch (UnauthorizedAccessException ex)
     {
-        ConsoleHelper.WriteWarning(Resource.ERR_NoPermission, Resource.PREP_Colon, Resource.WORD_SubDirectory, directory.FullName);
+        ConsoleHelper.WriteWarning(Resource.ERR_NoPermission, string.Format(Resource.PREP_Colon, Resource.WORD_SubDirectory, directory.FullName));
         ConsoleHelper.WriteWarning(ex.Message);
     }
     catch (DirectoryNotFoundException ex)
@@ -326,7 +325,7 @@ static void ConvertMetadata(FileInfo file,
         }
         if (!hasID3v2_3)
         {
-            ConsoleHelper.WriteColorLine(ConsoleColor.Yellow, Resource.INFO_ChangeToID3v23);
+            ConsoleHelper.WriteColorLine(ConsoleColor.Cyan, Resource.INFO_ChangeToID3v23);
         }
         if (saveModifiedAudio &&
             newFilename != theTrack.Path) //新文件和旧文件一样时还是使用普通储存
