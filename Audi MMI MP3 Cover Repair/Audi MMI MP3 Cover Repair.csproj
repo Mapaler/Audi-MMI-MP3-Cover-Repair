@@ -2,12 +2,12 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>net8.0-windows7.0;net9.0-windows7.0</TargetFrameworks>
+    <TargetFrameworks>net8.0-windows7.0;net10.0-windows7.0</TargetFrameworks>
     <RootNamespace>Audi_MMI_MP3_Cover_Repair</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <ApplicationIcon>Properties\aodi.ico</ApplicationIcon>
-    <VersionPrefix>3.0.1</VersionPrefix>
+    <VersionPrefix>3.0.1.1</VersionPrefix>
     <Authors>枫谷剑仙</Authors>
     <Copyright>Copyright © 2024 Mapaler</Copyright>
     <Description>修复奥迪汽车多媒体平台 MP3 歌曲不能显示封面的问题</Description>
@@ -19,9 +19,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="System.CommandLine" Version="2.0.0-beta6.25358.103" />
-    <PackageReference Include="System.Drawing.Common" Version="9.0.7" />
-    <PackageReference Include="z440.atl.core" Version="7.2.0" />
+    <PackageReference Include="System.CommandLine" Version="2.0.0-rc.1.25451.107" />
+    <PackageReference Include="System.Drawing.Common" Version="10.0.0-rc.1.25451.107" />
+    <PackageReference Include="z440.atl.core" Version="7.4.0" />
   </ItemGroup>
 
   <ItemGroup>
